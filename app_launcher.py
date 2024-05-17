@@ -1,6 +1,6 @@
 import gi
 gi.require_version('Gtk', '4.0')
-from gi.repository import Gtk, Gdk
+from gi.repository import Gtk, Gdk, GLib, Gio
 
 from command_loader import CommandLoader
 from application_manager import ApplicationManager
@@ -15,6 +15,10 @@ class AppLauncher(Gtk.Window):
         load_applications: Carga las aplicaciones en el ListBox.
         load_system_commands: Carga los comandos del sistema en el ListBox.
         load_connectivity_commands: Carga los comandos de conectividad en el ListBox.
+        update_battery_status: Actualiza el estado de la batería.
+        update_cpu_load: Actualiza la carga de la CPU.
+        update_memory_status: Actualiza el estado de la memoria.
+        update_status_labels: Actualiza las etiquetas de estado (batería, CPU y memoria).
         on_filter_text_changed: Filtra las aplicaciones o comandos basados en el texto de entrada.
         on_filter_entry_key_press: Maneja el evento de pulsación de teclas en el campo de filtro.
         on_row_activated: Ejecuta la aplicación o comando seleccionado.
@@ -22,7 +26,7 @@ class AppLauncher(Gtk.Window):
         launch_application: Lanza una aplicación.
         apply_css: Aplica el estilo CSS a la ventana.
     """
-    
+
     def __init__(self):
         """
         Inicializa la ventana y los componentes de la interfaz.
@@ -52,6 +56,8 @@ class AppLauncher(Gtk.Window):
         # Crear un Entry para filtrar
         self.filter_entry = Gtk.Entry()
         self.filter_entry.set_placeholder_text("Filtrar aplicaciones...")
+        self.filter_entry.set_icon_from_icon_name(Gtk.EntryIconPosition.PRIMARY, "edit-symbolic")
+
         self.filter_entry.connect("changed", self.on_filter_text_changed)
 
         # Crear un controlador de eventos de teclado para el Entry
@@ -75,8 +81,60 @@ class AppLauncher(Gtk.Window):
         # Cargar las aplicaciones en el ListBox
         self.load_applications(self.application_manager.all_applications)
 
+        # Crear etiquetas para el estado de la batería, la carga de la CPU y la memoria
+        self.battery_image = Gtk.Image.new_from_pixbuf(self.load_icon("battery", 16))
+        self.battery_label = Gtk.Label()
+
+        self.cpu_image = Gtk.Image.new_from_pixbuf(self.load_icon("cpu", 16))
+        self.cpu_label = Gtk.Label()
+
+        self.memory_image = Gtk.Image.new_from_pixbuf(self.load_icon("memory", 16))
+        self.memory_label = Gtk.Label()
+        
+        # Crear un box horizontal para las etiquetas de estado
+        status_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        status_box.set_halign(Gtk.Align.CENTER)
+
+        # Añadir batería
+        battery_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=5)
+        battery_box.append(self.battery_image)
+        battery_box.append(self.battery_label)
+        status_box.append(battery_box)
+
+        # Añadir CPU
+        cpu_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=5)
+        cpu_box.append(self.cpu_image)
+        cpu_box.append(self.cpu_label)
+        status_box.append(cpu_box)
+
+        # Añadir memoria
+        memory_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=5)
+        memory_box.append(self.memory_image)
+        memory_box.append(self.memory_label)
+        status_box.append(memory_box)
+        
+        # Añadir el box de estado al contenedor principal
+        vbox.append(status_box)
+
+        # Iniciar el temporizador para actualizar las etiquetas de estado
+        GLib.timeout_add_seconds(1, self.update_status_labels)
+
         # Aplicar el estilo CSS
         self.apply_css()
+
+    def load_icon(self, icon_name, size):
+        """
+        Carga un icono desde el tema con un tamaño especificado.
+
+        Args:
+            icon_name (str): Nombre del icono.
+            size (int): Tamaño del icono en píxeles.
+
+        Returns:
+            GdkPixbuf.Pixbuf: El icono cargado.
+        """
+        theme = Gtk.IconTheme.get_for_display(Gdk.Display.get_default())
+        return theme.load_icon(icon_name, size, 0)
 
     def load_applications(self, applications):
         """
@@ -121,12 +179,13 @@ class AppLauncher(Gtk.Window):
 
     def load_connectivity_commands(self):
         """
-        Carga los comandos de conectividad en el ListBox y actualiza el estado del Bluetooth y WiFi.
+        Carga los comandos de conectividad en el ListBox y actualiza el estado del Bluetooth, WiFi y Audio.
         """
         connectivity_commands = self.command_loader.get_connectivity_commands()
         self.load_applications([(cmd[0], lambda cmd=cmd[1]: self.launch_application(cmd), cmd[2]) for cmd in connectivity_commands])
         self.update_bluetooth_status()
         self.update_wifi_status()
+        self.update_audio_status()
 
     def update_bluetooth_status(self):
         """
@@ -150,6 +209,18 @@ class AppLauncher(Gtk.Window):
             if "Wifi" in label.get_text():
                 wifi_status = self.get_wifi_status()
                 label.set_text(f"Wifi ({wifi_status})")
+                break
+
+    def update_audio_status(self):
+        """
+        Actualiza el estado de la salida de audio en el ListBox.
+        """
+        for row in self.listbox:
+            hbox = row.get_child()
+            label = hbox.get_first_child().get_next_sibling()
+            if "Audio" in label.get_text():
+                audio_status = self.get_audio_status()
+                label.set_text(f"Audio ({audio_status})")
                 break
 
     def get_bluetooth_status(self):
@@ -188,6 +259,99 @@ class AppLauncher(Gtk.Window):
         except Exception as e:
             print(f"Error obteniendo el estado de WiFi: {e}")
             return "Desconocido"
+
+    def get_audio_status(self):
+        """
+        Obtiene el estado actual de la salida de audio.
+
+        Returns:
+            str: Nombre de la salida de audio activa o 'Desconocido'.
+        """
+        try:
+            result = subprocess.run(['pactl', 'list', 'sinks'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            lines = result.stdout.split('\n')
+            for line in lines:
+                if "Name:" in line:
+                    return line.split("Name:")[1].strip()
+            return "Desconocido"
+        except Exception as e:
+            print(f"Error obteniendo el estado de Audio: {e}")
+            return "Desconocido"
+
+    def update_battery_status(self):
+        """
+        Obtiene el estado actual de la batería y devuelve el porcentaje de batería.
+
+        Returns:
+            str: Porcentaje de batería.
+        """
+        try:
+            result = subprocess.run(['acpi', '-b'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            if result.returncode == 0:
+                output = result.stdout.strip()
+                if "Battery" in output:
+                    # Extraer el porcentaje de batería
+                    percentage = output.split(", ")[1].split("%")[0] + "%"
+                    return percentage
+            return "N/D"
+        except Exception as e:
+            print(f"Error obteniendo el estado de la batería: {e}")
+            return "N/D"
+
+    def update_cpu_load(self):
+        """
+        Obtiene la carga actual de la CPU.
+
+        Returns:
+            str: Carga de la CPU.
+        """
+        try:
+            result = subprocess.run(['grep', 'cpu ', '/proc/stat'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            if result.returncode == 0:
+                cpu_times = result.stdout.strip().split()[1:5]
+                cpu_times = list(map(int, cpu_times))
+                total_time = sum(cpu_times)
+                idle_time = cpu_times[3]
+                load = 100 * (total_time - idle_time) / total_time
+                return f"{load:.2f}%"
+            return "N/D"
+        except Exception as e:
+            print(f"Error obteniendo la carga de la CPU: {e}")
+            return "N/D"
+
+    def update_memory_status(self):
+        """
+        Obtiene el estado actual de la memoria.
+
+        Returns:
+            str: Memoria ocupada y disponible.
+        """
+        try:
+            result = subprocess.run(['free', '-m'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            if result.returncode == 0:
+                lines = result.stdout.strip().split('\n')
+                memory_line = lines[1].split()
+                used_memory = memory_line[2]
+                total_memory = memory_line[1]
+                return f"{used_memory}M/{total_memory}M"
+            return "N/D"
+        except Exception as e:
+            print(f"Error obteniendo el estado de la memoria: {e}")
+            return "N/D"
+
+    def update_status_labels(self):
+        """
+        Actualiza las etiquetas de estado (batería, CPU y memoria).
+        """
+        battery_status = self.update_battery_status()
+        cpu_load = self.update_cpu_load()
+        memory_status = self.update_memory_status()
+
+        self.battery_label.set_text(battery_status)
+        self.cpu_label.set_text(cpu_load)
+        self.memory_label.set_text(memory_status)
+
+        return True  # Return True to keep the timeout active
 
     def on_filter_text_changed(self, entry):
         """
