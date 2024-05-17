@@ -1,0 +1,24 @@
+entry {
+    border: 2px solid #5e81ac;
+    color: #81a1c1;
+    padding: 5px;
+    border-radius: 5px;
+}
+
+row {
+    background-color: #3b4252;
+    color: #eceff4;
+    border-radius: 5px;
+    padding: 5px;
+    margin: 5px;
+    
+}
+
+row:selected {
+    background-color: #5e81ac;
+}
+
+label {
+    color: #eceff4;
+    padding: 5px;
+}
