@@ -1,24 +1,58 @@
+/* General window styling */
+window {
+    background-color: #2E2E2E; /* Dark grey background */
+    color: #FFFFFF; /* White text color */
+    border-radius: 10px; /* Rounded corners */
+    border: 2px solid #386da2; /* Blue border */
+}
+
+/* Styling for Gtk.Entry (the filter entry) */
 entry {
-    border: 2px solid #5e81ac;
-    color: #81a1c1;
-    padding: 5px;
-    border-radius: 5px;
+    background-color: #3C3C3C; /* Slightly lighter grey background */
+    color: #FFFFFF; /* White text color */
+    border-radius: 5px; /* Rounded corners */
+    border: 1px solid #386da2; /* Blue border */
+    padding: 5px; /* Padding inside the entry */
 }
 
-row {
-    background-color: #3b4252;
-    color: #eceff4;
-    border-radius: 5px;
-    padding: 5px;
-    margin: 5px;
-    
+/* Styling for Gtk.ScrolledWindow */
+scrolledwindow {
+    background-color: #2E2E2E; /* Match the general window background */
 }
 
-row:selected {
-    background-color: #5e81ac;
+/* Styling for Gtk.ListBox and its children */
+list {
+    background-color: #2E2E2E; /* Match the general window background */
+    border-radius: 5px; /* Rounded corners */
 }
 
+listbox row {
+    background-color: #3C3C3C; /* Slightly lighter grey for list rows */
+    color: #FFFFFF; /* White text color */
+    border-bottom: 1px solid #386da2; /* Blue bottom border for separation */
+    margin: 5px 0; /* Space between rows */
+    padding: 10px; /* Padding inside the rows */
+    border-radius: 5px; /* Rounded corners */
+}
+
+/* Styling for Gtk.Image (icons) */
+image {
+    margin-right: 10px; /* Space between the icon and the text */
+}
+
+/* Styling for Gtk.Label */
 label {
-    color: #eceff4;
-    padding: 5px;
+    color: #FFFFFF; /* White text color */
+}
+
+/* Styling for selected ListBox row */
+listbox row:selected {
+    background-color: #1E1E1E; /* Darker grey for selected row */
+    border: 2px solid #386da2; /* Blue border for selected row */
+}
+
+/* Additional styling for hover effect on ListBox rows */
+listbox row:hover {
+    background-color: #4C4C4C; /* Slightly lighter grey for hover effect */
+    border: 1px solid #386da2; /* Blue border on hover */
 }
