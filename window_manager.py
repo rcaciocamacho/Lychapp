@@ -116,7 +116,7 @@ class WindowManager:
 
         # Añadir icono de arroba (@)
         at_label = Gtk.Label()
-        at_label.set_markup('<span size="large"><a href="https://github.com/rcaciocamacho/Lychapp">@</a></span>')
+        at_label.set_markup('<span size="large"><a href="https://github.com/rcaciocamacho/Lychapp">@_Lychapp</a></span>')
         at_label.set_hexpand(False)
         at_label.set_halign(Gtk.Align.CENTER)
         at_label.set_valign(Gtk.Align.CENTER)
