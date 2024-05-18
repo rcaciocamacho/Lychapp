@@ -353,6 +353,8 @@ class AppLauncher(Gtk.Window):
             self.load_connectivity_commands()
         elif filter_text == "help:":
             self.window_manager.show_help_window()
+        elif filter_text.startswith("theme:"):
+            self.load_theme_files()
         else:
             filtered_applications = self.application_manager.filter_applications(filter_text)
             self.load_applications(filtered_applications)
@@ -397,6 +399,11 @@ class AppLauncher(Gtk.Window):
                 if command_func:
                     print(f"{command_name.get_text()} ejecutado")
                     command_func()
+        elif filter_text.startswith("theme:"):
+            hbox = row.get_child()
+            theme_name = hbox.get_first_child().get_next_sibling()
+            if isinstance(theme_name, Gtk.Label):
+                self.apply_theme(theme_name.get_text())
         else:
             filtered_applications = self.application_manager.filter_applications(filter_text)
             app_name, app_command, _ = filtered_applications[index]
@@ -404,6 +411,29 @@ class AppLauncher(Gtk.Window):
             print(f"{app_name} lanzado")
             app_command()
             self.close()  # Cerrar la ventana
+
+    def apply_theme(self, theme_name):
+        """
+        Aplica un nuevo tema CSS a la interfaz gráfica.
+
+        Args:
+            theme_name (str): Nombre del archivo de tema sin la extensión.
+        """
+        css_file = os.path.join('themes', f"{theme_name}.css")
+        if os.path.exists(css_file):
+            css_provider = Gtk.CssProvider()
+            with open(css_file, "rb") as f:
+                css_data = f.read()
+            css_provider.load_from_data(css_data)
+
+            Gtk.StyleContext.add_provider_for_display(
+                Gdk.Display.get_default(),
+                css_provider,
+                Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+            )
+            print(f"Tema '{theme_name}' aplicado")
+        else:
+            print(f"Archivo '{css_file}' no encontrado")
 
     def on_key_press(self, controller, keyval, keycode, state):
         """
@@ -433,7 +463,7 @@ class AppLauncher(Gtk.Window):
         Aplica el estilo CSS a la ventana.
         """
         css_provider = Gtk.CssProvider()
-        css_file = "style.css"
+        css_file = "themes/style.css"
         with open(css_file, "rb") as f:
             css_data = f.read()
 
@@ -444,6 +474,27 @@ class AppLauncher(Gtk.Window):
             css_provider,
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
         )
+    
+    def load_theme_files(self):
+        """
+        Carga los archivos de temas .css disponibles en el ListBox.
+        """
+        css_files = self.list_css_files()
+        theme_commands = [(css_file, lambda css_file=css_file: self.apply_theme(css_file), "preferences-desktop-theme") for css_file in css_files]
+        self.load_applications(theme_commands)
+        
+    def list_css_files(self):
+        """
+        Lista los archivos .css disponibles en el directorio themes.
+
+        Returns:
+            list: Lista de nombres de archivos .css sin la extensión.
+        """
+        css_files = [f[:-4] for f in os.listdir('themes') if f.endswith('.css')]
+        print("***********************************************")
+        print(css_files)
+        print("***********************************************")
+        return css_files
 
 if __name__ == "__main__":
     win = AppLauncher()

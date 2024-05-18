@@ -151,8 +151,7 @@ Lychapp/
 
 ## Tareas pendientes
 
-   1. Gestión de temas para la interfaz de la aplicación.
-   2. Ejecución de comandos de terminal desde el lanzador.
+   1. Ejecución de comandos de terminal desde el lanzador.
 
 ## Contribución
 
