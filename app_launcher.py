@@ -1,6 +1,6 @@
 import gi
 gi.require_version('Gtk', '4.0')
-from gi.repository import Gtk, Gdk, GLib, Gio
+from gi.repository import Gtk, Gdk, GLib
 
 from command_loader import CommandLoader
 from application_manager import ApplicationManager
@@ -82,13 +82,16 @@ class AppLauncher(Gtk.Window):
         self.load_applications(self.application_manager.all_applications)
 
         # Crear etiquetas para el estado de la batería, la carga de la CPU y la memoria
-        self.battery_image = Gtk.Image.new_from_pixbuf(self.load_icon("battery", 16))
+        self.battery_image = Gtk.Image.new_from_icon_name("battery")
+        self.battery_image.set_pixel_size(24)
         self.battery_label = Gtk.Label()
 
-        self.cpu_image = Gtk.Image.new_from_pixbuf(self.load_icon("cpu", 16))
+        self.cpu_image = Gtk.Image.new_from_icon_name("cpu")
+        self.cpu_image.set_pixel_size(24)
         self.cpu_label = Gtk.Label()
 
-        self.memory_image = Gtk.Image.new_from_pixbuf(self.load_icon("memory", 16))
+        self.memory_image = Gtk.Image.new_from_icon_name("memory")
+        self.memory_image.set_pixel_size(24)
         self.memory_label = Gtk.Label()
         
         # Crear un box horizontal para las etiquetas de estado
@@ -131,10 +134,13 @@ class AppLauncher(Gtk.Window):
             size (int): Tamaño del icono en píxeles.
 
         Returns:
-            GdkPixbuf.Pixbuf: El icono cargado.
+            Gtk.IconPaintable: El icono cargado.
         """
         theme = Gtk.IconTheme.get_for_display(Gdk.Display.get_default())
-        return theme.load_icon(icon_name, size, 0)
+        icon_info = theme.lookup_icon(icon_name, size, 0)
+        if icon_info is not None:
+            return icon_info.load_icon()
+        return None
 
     def load_applications(self, applications):
         """
@@ -147,7 +153,7 @@ class AppLauncher(Gtk.Window):
         while (child := self.listbox.get_first_child()) is not None:
             self.listbox.remove(child)
 
-        for app_name, _, icon_name in applications:
+        for app_name, app_command, icon_name in applications:
             row = Gtk.ListBoxRow()
             hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
             row.set_child(hbox)
@@ -165,6 +171,9 @@ class AppLauncher(Gtk.Window):
             label = Gtk.Label(label=app_name)
             label.set_xalign(0.0)
             hbox.append(label)
+
+            # Añadir el comando de la aplicación como atributo
+            row.app_command = app_command
 
             self.listbox.append(row)
 
@@ -194,7 +203,7 @@ class AppLauncher(Gtk.Window):
         for row in self.listbox:
             hbox = row.get_child()
             label = hbox.get_first_child().get_next_sibling()
-            if "Bluetooth" in label.get_text():
+            if isinstance(label, Gtk.Label) and "Bluetooth" in label.get_text():
                 bluetooth_status = self.get_bluetooth_status()
                 label.set_text(f"Bluetooth ({bluetooth_status})")
                 break
@@ -206,7 +215,7 @@ class AppLauncher(Gtk.Window):
         for row in self.listbox:
             hbox = row.get_child()
             label = hbox.get_first_child().get_next_sibling()
-            if "Wifi" in label.get_text():
+            if isinstance(label, Gtk.Label) and "Wifi" in label.get_text():
                 wifi_status = self.get_wifi_status()
                 label.set_text(f"Wifi ({wifi_status})")
                 break
@@ -218,7 +227,7 @@ class AppLauncher(Gtk.Window):
         for row in self.listbox:
             hbox = row.get_child()
             label = hbox.get_first_child().get_next_sibling()
-            if "Audio" in label.get_text():
+            if isinstance(label, Gtk.Label) and "Audio" in label.get_text():
                 audio_status = self.get_audio_status()
                 label.set_text(f"Audio ({audio_status})")
                 break
@@ -401,9 +410,12 @@ class AppLauncher(Gtk.Window):
         filter_text = self.filter_entry.get_text().lower()
         if filter_text.startswith(self.command_loader.sys_command_prefix) or filter_text.startswith(self.command_loader.con_command_prefix):
             hbox = row.get_child()
-            command_name, command_func, _ = hbox.get_first_child(), hbox.get_first_child().get_next_sibling(), hbox.get_first_child().get_next_sibling().get_next_sibling()
-            print(f"{command_name.get_text()} ejecutado")
-            command_func()
+            command_name = hbox.get_first_child().get_next_sibling()
+            if isinstance(command_name, Gtk.Label):
+                command_func = row.app_command
+                if command_func:
+                    print(f"{command_name.get_text()} ejecutado")
+                    command_func()
         else:
             filtered_applications = self.application_manager.filter_applications(filter_text)
             app_name, app_command, _ = filtered_applications[index]
@@ -451,3 +463,9 @@ class AppLauncher(Gtk.Window):
             css_provider,
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
         )
+
+if __name__ == "__main__":
+    win = AppLauncher()
+    win.connect("destroy", Gtk.main_quit)
+    win.show()
+    Gtk.main()
