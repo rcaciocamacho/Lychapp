@@ -1,17 +1,22 @@
 import gi
-gi.require_version('Gtk', '4.0')
+import subprocess
+import os
+import glob
+import configparser
 from gi.repository import Gtk, Gdk, GLib
 
 from command_loader import CommandLoader
 from application_manager import ApplicationManager
-import subprocess
+from window_manager import WindowManager
+
+gi.require_version('Gtk', '4.0')
 
 class AppLauncher(Gtk.Window):
     """
-    Maneja la ventana principal y la lógica de la interfaz.
+    Maneja la lógica principal de la aplicación.
 
     Métodos:
-        __init__: Inicializa la ventana y los componentes de la interfaz.
+        __init__: Inicializa la aplicación y sus componentes.
         load_applications: Carga las aplicaciones en el ListBox.
         load_system_commands: Carga los comandos del sistema en el ListBox.
         load_connectivity_commands: Carga los comandos de conectividad en el ListBox.
@@ -23,107 +28,30 @@ class AppLauncher(Gtk.Window):
         on_filter_entry_key_press: Maneja el evento de pulsación de teclas en el campo de filtro.
         on_row_activated: Ejecuta la aplicación o comando seleccionado.
         on_key_press: Maneja el evento de pulsación de teclas en la ventana.
+        on_is_active_notify: Maneja el evento de cambio de estado de la ventana.
         launch_application: Lanza una aplicación.
         apply_css: Aplica el estilo CSS a la ventana.
     """
 
     def __init__(self):
         """
-        Inicializa la ventana y los componentes de la interfaz.
+        Inicializa la aplicación y sus componentes.
         """
         super().__init__(title="App Launcher")
 
         self.command_loader = CommandLoader()
         self.application_manager = ApplicationManager(self)
+        self.window_manager = WindowManager(self)
 
-        self.set_default_size(500, 400)
-        self.set_size_request(500, 400)  # Fixed size
-        self.set_resizable(False)  # Make window non-resizable
-        self.set_decorated(False)  # Remove window decorations
-        self.set_modal(True)
-        self.set_valign(Gtk.Align.CENTER)
-        self.set_halign(Gtk.Align.CENTER)
+        # Crear la ventana principal
+        self.window_manager.create_main_window()
 
-        # Crear un controlador de eventos para capturar eventos de teclado
-        self.key_controller = Gtk.EventControllerKey()
-        self.key_controller.connect("key-pressed", self.on_key_press)
-        self.add_controller(self.key_controller)
-
-        # Crear un box vertical
-        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
-        self.set_child(vbox)
-
-        # Crear un Entry para filtrar
-        self.filter_entry = Gtk.Entry()
-        self.filter_entry.set_placeholder_text("Filtrar aplicaciones...")
-        self.filter_entry.set_icon_from_icon_name(Gtk.EntryIconPosition.PRIMARY, "edit-symbolic")
-
-        self.filter_entry.connect("changed", self.on_filter_text_changed)
-
-        # Crear un controlador de eventos de teclado para el Entry
-        self.filter_entry_key_controller = Gtk.EventControllerKey()
-        self.filter_entry_key_controller.connect("key-pressed", self.on_filter_entry_key_press)
-        self.filter_entry.add_controller(self.filter_entry_key_controller)
-        
-        vbox.append(self.filter_entry)
-
-        # Crear un ScrolledWindow
-        scrolled_window = Gtk.ScrolledWindow()
-        scrolled_window.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
-        scrolled_window.set_min_content_height(320)  # Tamaño mínimo del ScrolledWindow
-        vbox.append(scrolled_window)
-
-        # Crear un ListBox y agregarlo al ScrolledWindow
-        self.listbox = Gtk.ListBox()
-        self.listbox.connect("row-activated", self.on_row_activated)
-        scrolled_window.set_child(self.listbox)
-
-        # Cargar las aplicaciones en el ListBox
-        self.load_applications(self.application_manager.all_applications)
-
-        # Crear etiquetas para el estado de la batería, la carga de la CPU y la memoria
-        self.battery_image = Gtk.Image.new_from_icon_name("battery")
-        self.battery_image.set_pixel_size(24)
-        self.battery_label = Gtk.Label()
-
-        self.cpu_image = Gtk.Image.new_from_icon_name("cpu")
-        self.cpu_image.set_pixel_size(24)
-        self.cpu_label = Gtk.Label()
-
-        self.memory_image = Gtk.Image.new_from_icon_name("memory")
-        self.memory_image.set_pixel_size(24)
-        self.memory_label = Gtk.Label()
-        
-        # Crear un box horizontal para las etiquetas de estado
-        status_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
-        status_box.set_halign(Gtk.Align.CENTER)
-
-        # Añadir batería
-        battery_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=5)
-        battery_box.append(self.battery_image)
-        battery_box.append(self.battery_label)
-        status_box.append(battery_box)
-
-        # Añadir CPU
-        cpu_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=5)
-        cpu_box.append(self.cpu_image)
-        cpu_box.append(self.cpu_label)
-        status_box.append(cpu_box)
-
-        # Añadir memoria
-        memory_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=5)
-        memory_box.append(self.memory_image)
-        memory_box.append(self.memory_label)
-        status_box.append(memory_box)
-        
-        # Añadir el box de estado al contenedor principal
-        vbox.append(status_box)
-
-        # Iniciar el temporizador para actualizar las etiquetas de estado
-        GLib.timeout_add_seconds(1, self.update_status_labels)
-
-        # Aplicar el estilo CSS
-        self.apply_css()
+    def on_is_active_notify(self, widget, param_spec):
+        """
+        Maneja el evento de cambio de estado de la ventana.
+        """
+        if not self.is_active:
+            self.close()
 
     def load_icon(self, icon_name, size):
         """
@@ -333,16 +261,17 @@ class AppLauncher(Gtk.Window):
         Obtiene el estado actual de la memoria.
 
         Returns:
-            str: Memoria ocupada y disponible.
+            str: Porcentaje de memoria ocupada.
         """
         try:
             result = subprocess.run(['free', '-m'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             if result.returncode == 0:
                 lines = result.stdout.strip().split('\n')
                 memory_line = lines[1].split()
-                used_memory = memory_line[2]
-                total_memory = memory_line[1]
-                return f"{used_memory}M/{total_memory}M"
+                used_memory = int(memory_line[2])
+                total_memory = int(memory_line[1])
+                memory_usage_percentage = (used_memory / total_memory) * 100
+                return f"{memory_usage_percentage:.2f}%"
             return "N/D"
         except Exception as e:
             print(f"Error obteniendo el estado de la memoria: {e}")
@@ -374,6 +303,8 @@ class AppLauncher(Gtk.Window):
             self.load_system_commands()
         elif filter_text.startswith(self.command_loader.con_command_prefix):
             self.load_connectivity_commands()
+        elif filter_text == "help:":
+            self.window_manager.show_help_window()
         else:
             filtered_applications = self.application_manager.filter_applications(filter_text)
             self.load_applications(filtered_applications)
@@ -397,6 +328,8 @@ class AppLauncher(Gtk.Window):
                 filtered_applications = self.application_manager.filter_applications(filter_text)
                 if len(filtered_applications) == 1:
                     self.on_row_activated(self.listbox, self.listbox.get_first_child())
+        elif keyval == Gdk.KEY_F1 and (state & Gdk.ModifierType.CONTROL_MASK):
+            self.window_manager.show_help_window()
 
     def on_row_activated(self, listbox, row):
         """
