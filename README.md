@@ -40,6 +40,11 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+#### Renombrar fichero de configuración
+
+   1. Renobrar fichero sample.env a .env.
+   2. Modificar el fichero para ajustarlos a nuestro sistema linux.
+
 #### Dependencias del Sistema
 
 Además de las dependencias de Python, asegúrate de tener instaladas las siguientes herramientas y bibliotecas en tu sistema:
