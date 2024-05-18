@@ -40,6 +40,37 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+#### Dependencias del Sistema
+
+Además de las dependencias de Python, asegúrate de tener instaladas las siguientes herramientas y bibliotecas en tu sistema:
+
+   1. gtk4: La biblioteca GTK 4.
+   2. bluetoothctl: Herramienta para gestionar Bluetooth desde la línea de comandos.
+   3. nmcli: Herramienta para gestionar conexiones de red.
+   4. pavucontrol: Herramienta para controlar los dispositivos de audio (necesita PulseAudio).
+   5. acpi: Herramienta para mostrar información sobre la batería.
+   6. grep: Utilidad para buscar texto en archivos.
+   7. free: Utilidad para mostrar la cantidad de memoria libre y usada en el sistema.
+
+> Puedes instalar estas herramientas en Debian/Ubuntu con:
+
+```sh
+sudo apt update
+sudo apt install python3-gi python3-venv bluetoothctl network-manager pavucontrol acpi grep free
+```
+
+En Fedora, usa:
+
+```sh
+sudo dnf install python3-gobject python3-venv bluetoothctl NetworkManager pavucontrol acpi grep procps-ng
+```
+
+En Arch Linux, usa:
+
+```sh
+sudo pacman -S python-gobject python-virtualenv bluez-utils networkmanager pavucontrol acpi grep procps-ng
+```
+
 ### 4. Configuración
 
 Crea un archivo .env en el directorio raíz del proyecto con el siguiente contenido:
@@ -113,10 +144,10 @@ Lychapp/
 └── README.md               # Documentación del proyecto
 ```
 
-## TODO
-Próximas mejoras: 
- - Gestión de temas para la interfaz de la aplicación.
- - Ejecución de comandos de terminal desde el lanzador.
+## Tareas pendientes
+
+   1. Gestión de temas para la interfaz de la aplicación.
+   2. Ejecución de comandos de terminal desde el lanzador.
 
 ## Contribución
 
@@ -139,4 +170,4 @@ Para cualquier consulta o comentario, puedes abrir un issue en el repositorio o 
 - **Licencia**: Información sobre la licencia del proyecto.
 - **Contacto**: Información de contacto para consultas o comentarios.
 
-Este archivo README.md proporciona una documentación completa y detallada del proyecto, facilitando a los usuarios y desarrolladores entender y contribuir al proyecto.
+> Este archivo README.md proporciona una documentación completa y detallada del proyecto, facilitando a los usuarios y desarrolladores entender y contribuir al proyecto.
