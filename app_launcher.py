@@ -1,7 +1,6 @@
 import gi
 import subprocess
 import os
-import glob
 import configparser
 from gi.repository import Gtk, Gdk, GLib
 
@@ -20,6 +19,10 @@ class AppLauncher(Gtk.Window):
         load_applications: Carga las aplicaciones en el ListBox.
         load_system_commands: Carga los comandos del sistema en el ListBox.
         load_connectivity_commands: Carga los comandos de conectividad en el ListBox.
+        update_bluetooth_status: Actualiza el estado de la conexión Bluetooth.
+        update_wifi_status: Actualiza el estado de la conexión WiFi.
+        update_audio_status: Actualiza el estado de la salida de audio.
+        get_pending_updates: Obtiene el número de paquetes pendientes de actualización.
         update_battery_status: Actualiza el estado de la batería.
         update_cpu_load: Actualiza la carga de la CPU.
         update_memory_status: Actualiza el estado de la memoria.
@@ -119,10 +122,40 @@ class AppLauncher(Gtk.Window):
         Carga los comandos de conectividad en el ListBox y actualiza el estado del Bluetooth, WiFi y Audio.
         """
         connectivity_commands = self.command_loader.get_connectivity_commands()
+        
+        # Verificar actualizaciones pendientes
+        pending_updates = self.get_pending_updates()
+        if pending_updates > 0:
+            # Modificar el comando de actualización para mostrar el número de paquetes pendientes
+            update_command = ("Actualizar ({} paquetes)".format(pending_updates), self.launch_application(self.command_loader.update_command), "system-software-update")
+            connectivity_commands.append(update_command)
+        else:
+            # Filtrar el comando de actualización si no hay paquetes pendientes
+            connectivity_commands = [cmd for cmd in connectivity_commands if "Actualizar" not in cmd[0]]
+        
         self.load_applications([(cmd[0], lambda cmd=cmd[1]: self.launch_application(cmd), cmd[2]) for cmd in connectivity_commands])
         self.update_bluetooth_status()
         self.update_wifi_status()
         self.update_audio_status()
+
+    def get_pending_updates(self):
+        """
+        Obtiene el número de paquetes pendientes de actualización.
+
+        Returns:
+            int: Número de paquetes pendientes de actualización.
+        """
+        try:
+            result = subprocess.run(['apt', 'list', '--upgradable'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            if result.returncode == 0:
+                output = result.stdout.strip().split('\n')
+                # Restamos la primera línea que es un encabezado
+                pending_updates = len(output) - 1
+                return pending_updates
+            return 0
+        except Exception as e:
+            print(f"Error obteniendo las actualizaciones pendientes: {e}")
+            return 0
 
     def update_bluetooth_status(self):
         """
@@ -190,7 +223,7 @@ class AppLauncher(Gtk.Window):
             result = subprocess.run(['nmcli', '-t', '-f', 'active,ssid', 'dev', 'wifi'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             lines = result.stdout.split('\n')
             for line in lines:
-                if line.startswith("yes:"):
+                if line.startswith("sí:"):
                     return line.split(":")[1]
             return "Desconectado"
         except Exception as e:
@@ -205,15 +238,30 @@ class AppLauncher(Gtk.Window):
             str: Nombre de la salida de audio activa o 'Desconocido'.
         """
         try:
-            result = subprocess.run(['pactl', 'list', 'sinks'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            lines = result.stdout.split('\n')
-            for line in lines:
-                if "Name:" in line:
-                    return line.split("Name:")[1].strip()
-            return "Desconocido"
+            # Obtener el nombre del sink por defecto
+            default_sink = subprocess.check_output(['pactl', 'get-default-sink'], text=True).strip()
+
+            # Listar todos los sinks y filtrar por el nombre del sink por defecto
+            sinks_output = subprocess.check_output(['pactl', 'list', 'sinks'], text=True)
+            
+            # Dividir la salida en bloques por cada sink
+            sinks = sinks_output.split('\n\n')
+            
+            # Buscar el bloque correspondiente al sink por defecto
+            for sink in sinks:
+                if default_sink in sink:
+                    # Buscar la línea de descripción en el bloque correspondiente
+                    for line in sink.split('\n'):
+                        if 'Description:' in line:
+                            description = line.split('Description:')[1].strip()
+                            return description
+            
+            return "Descripción no encontrada"
+        
+        except subprocess.CalledProcessError as e:
+            return f"Error al ejecutar el comando: {e}"
         except Exception as e:
-            print(f"Error obteniendo el estado de Audio: {e}")
-            return "Desconocido"
+            return f"Error: {e}"
 
     def update_battery_status(self):
         """

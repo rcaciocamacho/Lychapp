@@ -53,5 +53,4 @@ class CommandLoader:
             ("Bluetooth", self.con_bluetooth_cmd, "preferences-system-bluetooth"),
             ("Wifi", self.con_wifi_cmd, "network-wireless"),
             ("Audio", self.con_audio_cmd, "audio-card"),
-            ("Actualizar", self.con_update_cmd, "system-software-update")
         ]
