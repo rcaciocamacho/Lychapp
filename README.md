@@ -53,13 +53,13 @@ CON_COMMAND=con:
 SYS_SHUTDOWN_CMD=shutdown -h now
 SYS_REBOOT_CMD=reboot
 SYS_LOGOUT_CMD=pkill -KILL -u
-SYS_LOCK_CMD=gnome-screensaver-command -l
+SYS_LOCK_CMD=loginctl lock-session
 
 # Connectivity commands
-CON_BLUETOOTH_CMD=bluetoothctl
-CON_WIFI_CMD=nmcli connection editor
+CON_BLUETOOTH_CMD=bluedevil-wizard
+CON_WIFI_CMD=nm-connection-editor
 CON_AUDIO_CMD=pavucontrol
-CON_UPDATE_CMD=sudo apt update
+CON_UPDATE_CMD=kitty -e sudo pacman -Syyu && yay -Syyu 
 ```
 
 ### 5. Ejecutar la aplicación
@@ -89,6 +89,7 @@ Para crear un atajo de teclado que abra la aplicación, puedes usar las herramie
 
    1. Para ejecutar comandos del sistema, escribe ```sys:``` seguido del comando deseado (e.g., sys:shutdown).
    2. Para ejecutar comandos de conectividad, escribe ```con:``` seguido del comando deseado (e.g., con:wifi).
+      - En el apartado de con: Solo tendremos disponible el comando de actualizar cuando haya actualizaciones pendientes del sistema.
 
 ### Estado del Sistema
 
@@ -96,8 +97,7 @@ Para crear un atajo de teclado que abra la aplicación, puedes usar las herramie
 
 Ventana de Ayuda
 
-   1. Presiona Ctrl+F1 para mostrar la ventana de ayuda con los comandos disponibles y los atajos de teclado.
-   2. Escribe help: en el campo de texto y presiona Enter para mostrar la ventana de ayuda.
+   1. Escribe help: en el campo de texto y presiona Enter para mostrar la ventana de ayuda.
 
 Estructura del Proyecto
 
