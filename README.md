@@ -113,6 +113,11 @@ Lychapp/
 └── README.md               # Documentación del proyecto
 ```
 
+## TODO
+Próximas mejoras: 
+ - Gestión de temas para la interfaz de la aplicación.
+ - Ejecución de comandos de terminal desde el lanzador.
+
 ## Contribución
 
 Las contribuciones son bienvenidas. Por favor, abre un issue o un pull request en GitHub para discutir cualquier cambio que te gustaría hacer.
