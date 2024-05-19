@@ -476,7 +476,7 @@ class AppLauncher(Gtk.Window):
         Aplica el estilo CSS a la ventana.
         """
         css_provider = Gtk.CssProvider()
-        css_file = "themes/style.css"
+        css_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'themes', 'style.css')
         with open(css_file, "rb") as f:
             css_data = f.read()
 

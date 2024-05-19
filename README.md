@@ -9,7 +9,7 @@ Lychapp es una aplicación lanzador de aplicaciones y comandos del sistema para 
 - **Comandos de Conectividad**: Accede a configuraciones de Bluetooth, WiFi, Audio y actualización del sistema.
 - **Estado del Sistema**: Muestra el estado de la batería, la carga de la CPU y el uso de la memoria en tiempo real.
 - **Ventana de Ayuda**: Muestra los comandos disponibles y los atajos de teclado.
-- **Atajo de Teclado**: Abre la aplicación con un atajo de teclado configurable.
+- **Gestión de temas**: Crea nuevos estilos para la interfaz a partir de estilo por defecto en la carpeta themes.
 
 ## Requisitos
 
@@ -113,6 +113,13 @@ Para crear un atajo de teclado que abra la aplicación, puedes usar las herramie
  3. Desplázate hacia abajo y haz clic en Atajos personalizados.
  4. Haz clic en el botón +.
  5. Configura el atajo con el comando python /$HOME/.config/Lychapp/main.py.
+
+### 7. Gestión de temas
+
+En la carpeta themes se alojarán todos los ficheros .css que contemplarán cada uno de los temas que quieras crear.
+
+   1. Haz una copia de archivo style.css y renombralo para crear un nuevo tema.
+   2. Una vez renombrado y modificado a tu gusto, lo tendrás disponible en la aplicación a través del comando **theme:**
 
 ## Uso
 
