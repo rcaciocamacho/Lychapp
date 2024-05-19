@@ -10,6 +10,16 @@ from window_manager import WindowManager
 
 gi.require_version('Gtk', '4.0')
 
+def load_default_theme(self):
+    """
+    Carga y aplica el tema predeterminado desde el archivo de configuración.
+    """
+    config = configparser.ConfigParser()
+    if config.read('themes/config.ini'):
+        theme_name = config.get('Settings', 'theme', fallback=None)
+        if theme_name:
+            self.apply_theme(theme_name)
+
 class AppLauncher(Gtk.Window):
     """
     Maneja la lógica principal de la aplicación.
@@ -146,11 +156,11 @@ class AppLauncher(Gtk.Window):
             int: Número de paquetes pendientes de actualización.
         """
         try:
-            result = subprocess.run(['apt', 'list', '--upgradable'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            result = subprocess.run(['pacman', '-Qu', '|', 'wc', '-l'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             if result.returncode == 0:
                 output = result.stdout.strip().split('\n')
                 # Restamos la primera línea que es un encabezado
-                pending_updates = len(output) - 1
+                pending_updates = len(output)
                 return pending_updates
             return 0
         except Exception as e:
@@ -332,10 +342,12 @@ class AppLauncher(Gtk.Window):
         battery_status = self.update_battery_status()
         cpu_load = self.update_cpu_load()
         memory_status = self.update_memory_status()
+        pending_updates = self.get_pending_updates()
 
         self.battery_label.set_text(battery_status)
         self.cpu_label.set_text(cpu_load)
         self.memory_label.set_text(memory_status)
+        self.updates_label.set_text(f"{pending_updates}")
 
         return True  # Return True to keep the timeout active
 
@@ -414,7 +426,7 @@ class AppLauncher(Gtk.Window):
 
     def apply_theme(self, theme_name):
         """
-        Aplica un nuevo tema CSS a la interfaz gráfica.
+        Aplica un nuevo tema CSS a la interfaz gráfica y guarda el tema seleccionado.
 
         Args:
             theme_name (str): Nombre del archivo de tema sin la extensión.
@@ -432,6 +444,7 @@ class AppLauncher(Gtk.Window):
                 Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
             )
             print(f"Tema '{theme_name}' aplicado")
+            self.save_theme(theme_name)
         else:
             print(f"Archivo '{css_file}' no encontrado")
 
@@ -491,10 +504,21 @@ class AppLauncher(Gtk.Window):
             list: Lista de nombres de archivos .css sin la extensión.
         """
         css_files = [f[:-4] for f in os.listdir('themes') if f.endswith('.css')]
-        print("***********************************************")
-        print(css_files)
-        print("***********************************************")
         return css_files
+
+    def save_theme(self, theme_name):
+        """
+        Guarda el tema seleccionado en un archivo de configuración.
+
+        Args:
+            theme_name (str): Nombre del tema a guardar.
+        """
+        config = configparser.ConfigParser()
+        config['Settings'] = {'theme': theme_name}
+        with open('themes/config.ini', 'w') as configfile:
+            config.write(configfile)
+
+
 
 if __name__ == "__main__":
     win = AppLauncher()

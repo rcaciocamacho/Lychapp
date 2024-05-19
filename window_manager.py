@@ -71,7 +71,7 @@ class WindowManager:
         # Cargar las aplicaciones en el ListBox
         self.app_launcher.load_applications(self.app_launcher.application_manager.all_applications)
 
-        # Crear etiquetas para el estado de la batería, la carga de la CPU y la memoria
+        # Crear etiquetas para el estado de la batería, la carga de la CPU, la memoria y actualizaciones pendientes
         battery_image = Gtk.Image.new_from_icon_name("battery")
         battery_image.set_pixel_size(20)
         battery_label = Gtk.Label()
@@ -84,16 +84,22 @@ class WindowManager:
         memory_image.set_pixel_size(20)
         memory_label = Gtk.Label()
 
+        updates_image = Gtk.Image.new_from_icon_name("system-software-update")
+        updates_image.set_pixel_size(20)
+        updates_label = Gtk.Label()
+
         self.app_launcher.battery_image = battery_image
         self.app_launcher.battery_label = battery_label
         self.app_launcher.cpu_image = cpu_image
         self.app_launcher.cpu_label = cpu_label
         self.app_launcher.memory_image = memory_image
         self.app_launcher.memory_label = memory_label
+        self.app_launcher.updates_image = updates_image
+        self.app_launcher.updates_label = updates_label
 
         # Crear un box horizontal para las etiquetas de estado
         status_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=5)
-        status_box.set_halign(Gtk.Align.CENTER)
+        status_box.set_halign(Gtk.Align.FILL)
         status_box.set_size_request(-1, 20)  # Reducir la altura del status_box
 
         # Añadir batería
@@ -114,11 +120,21 @@ class WindowManager:
         memory_box.append(memory_label)
         status_box.append(memory_box)
 
+        # Añadir actualizaciones pendientes
+        updates_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=5)
+        updates_box.append(updates_image)
+        updates_box.append(updates_label)
+        status_box.append(updates_box)
+
+        # Crear un contenedor de relleno para empujar el icono @ a la derecha
+        filler = Gtk.Box()
+        status_box.append(filler)
+
         # Añadir icono de arroba (@)
         at_label = Gtk.Label()
-        at_label.set_markup('<span size="large"><a href="https://github.com/rcaciocamacho/Lychapp">@_Lychapp</a></span>')
+        at_label.set_markup('<span size="large"><a href="https://github.com/rcaciocamacho/Lychapp">@Lychapp</a></span>')
         at_label.set_hexpand(False)
-        at_label.set_halign(Gtk.Align.CENTER)
+        at_label.set_halign(Gtk.Align.END)
         at_label.set_valign(Gtk.Align.CENTER)
         status_box.append(at_label)
 
@@ -144,10 +160,10 @@ class WindowManager:
         help_window.set_halign(Gtk.Align.CENTER)
 
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
-        vbox.set_margin_top(10)
-        vbox.set_margin_bottom(10)
-        vbox.set_margin_start(10)
-        vbox.set_margin_end(10)
+        vbox.set_margin_top(6)
+        vbox.set_margin_bottom(6)
+        vbox.set_margin_start(6)
+        vbox.set_margin_end(6)
         help_window.set_child(vbox)
 
         help_label = Gtk.Label()
@@ -157,6 +173,7 @@ class WindowManager:
 
         commands = self.app_launcher.command_loader.get_system_commands() + self.app_launcher.command_loader.get_connectivity_commands()
         commands_markup = "\n".join([f"<tt>{cmd[0]}</tt>" for cmd in commands])
+        commands_markup += "\n<tt>help:</tt> Mostrar esta ventana de ayuda"
         commands_label = Gtk.Label()
         commands_label.set_markup(commands_markup)
         commands_label.set_xalign(0.0)
@@ -167,7 +184,7 @@ class WindowManager:
         shortcut_label.set_xalign(0.0)
         vbox.append(shortcut_label)
 
-        shortcuts_markup = "<tt>Ctrl+F1:</tt> Mostrar esta ventana de ayuda\n<tt>Escape:</tt> Cerrar la aplicación\n<tt>help:</tt> Mostrar esta ventana de ayuda"
+        shortcuts_markup = "<tt>Ctrl+F1:</tt> Mostrar esta ventana de ayuda\n<tt>Escape:</tt> Cerrar la aplicación"
         shortcuts_label = Gtk.Label()
         shortcuts_label.set_markup(shortcuts_markup)
         shortcuts_label.set_xalign(0.0)

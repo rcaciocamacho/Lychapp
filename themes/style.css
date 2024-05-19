@@ -19,7 +19,7 @@ entry {
 
 /* Styling for the icon inside the Gtk.Entry */
 entry:primary-icon {
-    padding: 3px 3px; /* Padding to create margin effect */
+    padding: 2px 2px 2px 2px; /* Padding to create margin effect */
 }
 
 /* Styling for Gtk.ScrolledWindow */
