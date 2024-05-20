@@ -11,6 +11,9 @@ mkdir -p "$INSTALL_DIR"
 cp -r *.{py,css,env} "$INSTALL_DIR"
 cp -r themes "$INSTALL_DIR"
 
+# Permisos de ejecución
+chmod o+x $INSTALL_DIR/main.py
+
 # Función para instalar dependencias en distribuciones basadas en Debian (Ubuntu, etc.)
 install_debian_dependencies() {
     echo "Instalando dependencias para Debian/Ubuntu..."
