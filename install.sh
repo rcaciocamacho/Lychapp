@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Nombre del proyecto y ruta de instalación
-PROJECT_NAME="Lychapp"
-INSTALL_DIR="$HOME/.config/$PROJECT_NAME"
+PROJECT_NAME="lychapp"
+INSTALL_DIR="/usr/share/$PROJECT_NAME"
 
 # Crear el directorio de instalación si no existe
 mkdir -p "$INSTALL_DIR"
